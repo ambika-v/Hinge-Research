@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from datetime import date, datetime
-from random import choice, randint
+from random import choice
 from typing import Tuple, Dict
 
 # ---------------------------------------------------
@@ -13,8 +13,60 @@ st.set_page_config(
     layout="wide",
 )
 
+# Hinge-inspired styling: off-white background, dark text, plum accent
+HINGE_ACCENT = "#5C2D91"
+HINGE_BG = "#F7F4F0"
+HINGE_TEXT = "#141414"
+
+st.markdown(
+    f"""
+    <style>
+    /* Global background */
+    .stApp {{
+        background-color: {HINGE_BG};
+    }}
+
+    /* Sidebar styling */
+    [data-testid="stSidebar"] {{
+        background-color: #FFFFFF;
+        border-right: 1px solid #E0E0E0;
+    }}
+
+    /* Headings */
+    h1, h2, h3, h4, h5, h6 {{
+        color: {HINGE_TEXT} !important;
+        font-family: "Helvetica Neue", Arial, sans-serif;
+    }}
+
+    /* Buttons */
+    div.stButton > button, div.stDownloadButton > button {{
+        background-color: {HINGE_ACCENT} !important;
+        color: #FFFFFF !important;
+        border-radius: 999px !important;
+        border: none;
+    }}
+    div.stButton > button:hover, div.stDownloadButton > button:hover {{
+        opacity: 0.9;
+    }}
+
+    /* Radio / select labels */
+    label, .stMarkdown, .stTextInput, .stSelectbox, .stSlider {{
+        color: {HINGE_TEXT};
+        font-family: "Helvetica Neue", Arial, sans-serif;
+    }}
+
+    /* Cards (info/success) */
+    .stAlert > div {{
+        border-radius: 16px;
+    }}
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 DATA_KEY = "checkin_data"
 PROFILE_KEY = "profile_data"
+SEED_KEY = "seeded_sample_data"
 
 
 # ---------------------------------------------------
@@ -71,6 +123,136 @@ def save_checkin(row: Dict):
     st.session_state[DATA_KEY] = pd.concat(
         [df, pd.DataFrame([row])], ignore_index=True
     )
+
+
+def seed_sample_data():
+    """Populate with a few synthetic participants so visuals look alive."""
+    init_data()
+    if st.session_state.get(SEED_KEY, False):
+        return
+
+    df = st.session_state[DATA_KEY]
+    if not df.empty:
+        st.session_state[SEED_KEY] = True
+        return
+
+    sample_rows = []
+    sample_users = [
+        {
+            "user_id": "MG",
+            "age_bracket": "25–29",
+            "location_region": "NYC",
+            "gender": "Woman",
+            "orientation": "Straight",
+            "neurotype": "ADHD / attention challenges",
+            "dating_intention": "Primarily looking for a long-term relationship",
+        },
+        {
+            "user_id": "RS",
+            "age_bracket": "30–34",
+            "location_region": "London",
+            "gender": "Man",
+            "orientation": "Bi / pan",
+            "neurotype": "Neurotypical (self-described)",
+            "dating_intention": "Exploring / not sure",
+        },
+        {
+            "user_id": "AJ",
+            "age_bracket": "18–24",
+            "location_region": "SF Bay Area",
+            "gender": "Non-binary",
+            "orientation": "Queer",
+            "neurotype": "Other neurodivergence",
+            "dating_intention": "Friendship / low pressure",
+        },
+    ]
+
+    goals = [
+        "Go on at least one date",
+        "Be more intentional about who I match with",
+        "Be more honest about what I want",
+        "Take a gentler, slower approach to dating",
+    ]
+    frictions = [
+        "I match but rarely move to dates",
+        "I overthink sending messages",
+        "I say yes to dates I’m not excited about",
+        "I struggle with consistent communication",
+    ]
+    standout_examples = [
+        "we laughed about our worst first dates",
+        "we talked about our favorite bad movies",
+        "we shared stories about our families",
+    ]
+
+    base_date = date.today()
+
+    for u in sample_users:
+        for offset in range(3):
+            d = base_date.replace(day=max(1, base_date.day - (7 * offset)))
+            dating_feel = choice([3, 4, 5, 6])
+            burnout_index = 8 - dating_feel
+            goal = choice(goals)
+            friction = choice(frictions)
+            matches = choice([2, 3, 5, 7])
+            conversations = choice([1, 2, 3, 4])
+            dates_count = choice([0, 1, 1, 2])
+            conversation_rate = conversations / matches if matches > 0 else 0
+            date_rate = dates_count / conversations if conversations > 0 else 0
+            went_on_date = "Yes" if dates_count > 0 else "No"
+            want_see_again = choice(["Yes", "Not sure", "No"]) if went_on_date == "Yes" else "N/A"
+            standout_moment = choice(standout_examples) if went_on_date == "Yes" else ""
+            nudge_arm = choice(["A", "B", "C"])
+            nudge_type = choice(["Scripted", "Reflective", "Planning"])
+            nudge_text = "Sample nudge text for demo purposes."
+            burnout_note = choice(
+                [
+                    "Felt a bit drained after so many small talks.",
+                    "Actually felt hopeful this week.",
+                    "Messaging back and forth is tiring but dates were good.",
+                ]
+            )
+            research_tags = "burnout, anxiety" if burnout_index >= 4 else "positive"
+
+            persona_label = generate_persona_label(
+                dating_feel=dating_feel,
+                goal=goal,
+                friction=friction,
+                neurotype=u["neurotype"],
+            )
+
+            sample_rows.append(
+                {
+                    **u,
+                    "checkin_date": d.isoformat(),
+                    "dating_feel": dating_feel,
+                    "burnout_index": burnout_index,
+                    "goal": goal,
+                    "friction": friction,
+                    "matches": matches,
+                    "conversations": conversations,
+                    "dates": dates_count,
+                    "conversation_rate": conversation_rate,
+                    "date_rate": date_rate,
+                    "went_on_date": went_on_date,
+                    "want_see_again": want_see_again,
+                    "standout_moment": standout_moment,
+                    "nudge_arm": nudge_arm,
+                    "nudge_type": nudge_type,
+                    "nudge_text": nudge_text,
+                    "burnout_note": burnout_note,
+                    "research_tags": research_tags,
+                    "persona_label": persona_label,
+                    "created_at": datetime.utcnow().isoformat(),
+                }
+            )
+
+    if sample_rows:
+        st.session_state[DATA_KEY] = pd.concat(
+            [df, pd.DataFrame(sample_rows)], ignore_index=True
+        )
+
+    st.session_state[SEED_KEY] = True
 
 
 # ---------------------------------------------------
@@ -215,7 +397,13 @@ def generate_nudge(
 # Sidebar navigation & profile
 # ---------------------------------------------------
 with st.sidebar:
-    st.title("💘 Check-In Coach")
+    # Hinge logo from external asset (for demo purposes)
+    st.image(
+        "https://logowik.com/content/uploads/images/hinge-app1178.jpg",
+        width=120,
+    )
+
+    st.title("Check-In Coach")
 
     user_id = st.text_input(
         "Your initials or nickname",
@@ -246,6 +434,7 @@ if not user_id:
     st.stop()
 
 init_data()
+seed_sample_data()
 
 
 # ---------------------------------------------------
@@ -259,6 +448,9 @@ if page == "Participant Profile":
         "It’s stored with each of your check-ins so that researchers can examine patterns "
         "across different groups."
     )
+
+    # Load existing profile if present
+    existing_profile = st.session_state.get(PROFILE_KEY, {}).get(user_id, {})
 
     with st.form("profile_form"):
         col1, col2, col3 = st.columns(3)
@@ -274,6 +466,13 @@ if page == "Participant Profile":
                     "35–39",
                     "40+",
                 ],
+                index=(
+                    ["Prefer not to say", "18–24", "25–29", "30–34", "35–39", "40+"].index(
+                        existing_profile.get("age_bracket", "Prefer not to say")
+                    )
+                    if existing_profile
+                    else 0
+                ),
             )
             gender = st.selectbox(
                 "Gender identity (self-described)",
@@ -285,6 +484,18 @@ if page == "Participant Profile":
                     "Multiple / fluid",
                     "Self-describe in notes",
                 ],
+                index=(
+                    [
+                        "Prefer not to say",
+                        "Woman",
+                        "Man",
+                        "Non-binary",
+                        "Multiple / fluid",
+                        "Self-describe in notes",
+                    ].index(existing_profile.get("gender", "Prefer not to say"))
+                    if existing_profile
+                    else 0
+                ),
             )
 
         with col2:
@@ -299,6 +510,19 @@ if page == "Participant Profile":
                     "Queer",
                     "Other / self-describe",
                 ],
+                index=(
+                    [
+                        "Prefer not to say",
+                        "Straight",
+                        "Gay",
+                        "Lesbian",
+                        "Bi / pan",
+                        "Queer",
+                        "Other / self-describe",
+                    ].index(existing_profile.get("orientation", "Prefer not to say"))
+                    if existing_profile
+                    else 0
+                ),
             )
             neurotype = st.selectbox(
                 "Neurotype (self-identified)",
@@ -309,6 +533,17 @@ if page == "Participant Profile":
                     "Other neurodivergence",
                     "Neurotypical (self-described)",
                 ],
+                index=(
+                    [
+                        "Prefer not to say",
+                        "ADHD / attention challenges",
+                        "Autistic / on the spectrum",
+                        "Other neurodivergence",
+                        "Neurotypical (self-described)",
+                    ].index(existing_profile.get("neurotype", "Prefer not to say"))
+                    if existing_profile
+                    else 0
+                ),
             )
 
         with col3:
@@ -321,34 +556,68 @@ if page == "Participant Profile":
                     "Friendship / low pressure",
                     "Taking a break but still curious",
                 ],
+                index=(
+                    [
+                        "Exploring / not sure",
+                        "Primarily looking for a long-term relationship",
+                        "Short-term / casual first",
+                        "Friendship / low pressure",
+                        "Taking a break but still curious",
+                    ].index(
+                        existing_profile.get(
+                            "dating_intention", "Exploring / not sure"
+                        )
+                    )
+                    if existing_profile
+                    else 0
+                ),
             )
             location_region = st.text_input(
                 "Location (city or region)",
+                value=existing_profile.get("location_region", ""),
                 placeholder="e.g., NYC, London, Bay Area",
             )
 
         additional_notes = st.text_area(
             "Anything else you'd want a researcher to know about how you date?",
+            value=existing_profile.get("additional_notes", ""),
             placeholder="Optional context (e.g., work schedule, mental health, family, culture...).",
         )
 
         submitted_profile = st.form_submit_button("Save profile notes")
 
     if submitted_profile:
-        st.success(
-            "Profile preferences saved. These values will be attached to your future check-ins."
-        )
+        profile_store = st.session_state.get(PROFILE_KEY, {})
+        profile_store[user_id] = {
+            "age_bracket": age_bracket,
+            "gender": gender,
+            "orientation": orientation,
+            "neurotype": neurotype,
+            "dating_intention": dating_intention,
+            "location_region": location_region,
+            "additional_notes": additional_notes,
+        }
+        st.session_state[PROFILE_KEY] = profile_store
+
+        # Also cache into top-level session for quick access in check-ins
+        st.session_state["age_bracket"] = age_bracket
+        st.session_state["gender"] = gender
+        st.session_state["orientation"] = orientation
+        st.session_state["neurotype"] = neurotype
+        st.session_state["dating_intention"] = dating_intention
+        st.session_state["location_region"] = location_region
+
+        st.success("Profile preferences saved. These values will be attached to your future check-ins.")
 
     st.markdown("### How these fields are used (for the Director)")
 
     st.markdown(
         """
-- **Segmentation**: Enables comparison across segments (e.g., ADHD vs. non-ADHD, different intentions).
-- **Context**: Gives qualitative nuance to patterns seen in the dashboard.
+- **Segmentation**: Enables comparison across segments (e.g., ADHD vs. non-ADHD, different intentions).  
+- **Context**: Gives qualitative nuance to patterns seen in the dashboard.  
 - **Filterability**: In a fuller implementation, researchers could filter charts by these fields.
 
-This page shows you’re thinking about **responsible, explicit segmentation** rather than
-just inferring everything from behavior.
+This page shows explicit, research-friendly segmentation instead of relying only on inferred behavior.
 """
     )
 
@@ -479,23 +748,25 @@ elif page == "New Check-In":
         with col_exp2:
             st.caption(
                 """
-- Arm A → Scripted nudges  
-- Arm B → Reflective nudges  
-- Arm C → Planning nudges  
+- Arm **A** → Scripted nudges  
+- Arm **B** → Reflective nudges  
+- Arm **C** → Planning nudges  
 """
             )
 
         submitted = st.form_submit_button("Generate support nudge & save check-in")
 
     if submitted:
-        # Simulate profile values from sidebar form (if set), else fall back
-        # In a fuller app you might persist these separately.
-        age_bracket = st.session_state.get("age_bracket", "Prefer not to say")
-        location_region = st.session_state.get("location_region", "")
-        gender = st.session_state.get("gender", "Prefer not to say")
-        orientation = st.session_state.get("orientation", "Prefer not to say")
-        neurotype = st.session_state.get("neurotype", "Prefer not to say")
-        dating_intention = st.session_state.get(
+        # Pull profile values if stored
+        profile_store = st.session_state.get(PROFILE_KEY, {})
+        profile_for_user = profile_store.get(user_id, {})
+
+        age_bracket = profile_for_user.get("age_bracket", "Prefer not to say")
+        location_region = profile_for_user.get("location_region", "")
+        gender = profile_for_user.get("gender", "Prefer not to say")
+        orientation = profile_for_user.get("orientation", "Prefer not to say")
+        neurotype = profile_for_user.get("neurotype", "Prefer not to say")
+        dating_intention = profile_for_user.get(
             "dating_intention", "Exploring / not sure"
         )
 
@@ -713,6 +984,19 @@ elif page == "Insights (Your Patterns)":
             st.info(text)
 
         st.markdown("---")
+        st.subheader("Mood distribution (visual)")
+
+        mood_hist = (
+            user_df["dating_feel"]
+            .value_counts()
+            .sort_index()
+            .rename_axis("dating_feel")
+            .reset_index(name="count")
+        )
+        if not mood_hist.empty:
+            st.bar_chart(mood_hist.set_index("dating_feel"))
+
+        st.markdown("---")
         st.subheader("Your raw check-in entries")
 
         st.dataframe(
@@ -835,6 +1119,14 @@ elif page == "Research Dashboard":
                     st.caption("No nudges recorded yet for the current filters.")
 
             st.markdown("---")
+            st.subheader("Behavior vs. burnout")
+
+            # Scatter: conversations vs burnout
+            if not filtered.empty:
+                scatter_df = filtered[["conversations", "burnout_index"]]
+                st.scatter_chart(scatter_df)
+
+            st.markdown("---")
             st.subheader("Goals, frictions & personas")
 
             colg3, colg4, colg5 = st.columns(3)
@@ -919,14 +1211,8 @@ elif page == "Research Design":
 
     st.markdown(
         """
-This page is here so you can **talk like a researcher** in your call.
-
-Use it to walk through:
-
-- Research questions  
-- Hypotheses  
-- Study design  
-- Metrics and possible next steps  
+Use this page to talk through the research thinking behind the prototype
+when you’re on your call.
 """
     )
 
@@ -983,18 +1269,18 @@ Use it to walk through:
 """
     )
 
-    st.markdown("### 5. How this could scale inside Hinge")
+    st.markdown("### 5. How this could scale inside a real dating app")
 
     st.markdown(
         """
 If this were integrated into a production environment, it could:
 
 - Use **real behavioral signals** instead of self-report (e.g., messaging events, date confirmations).  
-- Run as a **within-app experiment** where Hinge Labs tweaks nudge content & timing.  
+- Run as a **within-app experiment** where the team tweaks nudge content & timing.  
 - Support **segment-level analysis** for Gen Z, LGBTQ+ users, neurodivergent users, etc., with proper consent & privacy.  
 
-You can end by asking: *“If you were to run this inside Hinge Labs, what would you want to add, remove, or change?”*  
-That invites them to imagine you collaborating with them.
+You can end by asking:  
+> “If you were to run this inside Hinge Labs, what would you want to add, remove, or change?”  
 """
     )
 
@@ -1007,7 +1293,7 @@ elif page == "About":
 
     st.markdown(
         """
-This prototype is a **Dating Check-In & Follow-Through Coach** designed specifically
+This prototype is a **Dating Check-In & Follow-Through Coach** designed
 as a **UX research + product exploration**.
 
 It showcases that you can:
@@ -1016,11 +1302,10 @@ It showcases that you can:
 - Design with **experimentability** in mind (nudge arms, metrics, segmentation)  
 - Create both **participant-facing** and **researcher-facing** views  
 
-The data is stored in memory (session-level) and meant purely for demonstration.
-In a real setting, this could connect to:
+Data is stored in memory for demo purposes only. In a real setting, this could connect to:
 
 - A secure backend with participant consent & privacy controls  
-- Hinge's existing experimentation framework  
+- An experimentation framework  
 - A richer qualitative analysis workflow (e.g., tagging, clustering, export to research tools)  
 """
     )
