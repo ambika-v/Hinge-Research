@@ -8,13 +8,12 @@ from typing import Tuple, Dict
 # Page config
 # ---------------------------------------------------
 st.set_page_config(
-    page_title="Dating Check-In & Follow-Through Coach",
+    page_title="Hinge Labs Concept: Dating Check-In & Follow-Through Coach",
     page_icon="💘",
     layout="wide",
 )
 
-# --- Color & visual system ---
-# More colorful, still soft and product-y
+# --- Color & visual system (colorful, but product-y) ---
 ACCENT = "#FF5A7A"        # rosy accent
 ACCENT_DARK = "#D74463"
 BG_GRADIENT_TOP = "#FDF2FF"
@@ -33,9 +32,8 @@ st.markdown(
         font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
     }}
 
-    /* Center content a bit and give it a card feel */
     .block-container {{
-        padding-top: 2rem;
+        padding-top: 1.5rem;
         padding-bottom: 4rem;
     }}
 
@@ -85,11 +83,6 @@ st.markdown(
 
     .stTextArea textarea {{
         border-radius: 14px !important;
-    }}
-
-    /* Sliders */
-    .stSlider > div > div > div {{
-        color: {ACCENT};
     }}
 
     /* Radio / checkbox labels */
@@ -169,7 +162,10 @@ def save_checkin(row: Dict):
 
 
 def seed_sample_data():
-    """Populate with a few synthetic participants so visuals look alive."""
+    """
+    Seed a small synthetic dataset so the researcher-facing views
+    are populated when first opened.
+    """
     init_data()
     if st.session_state.get(SEED_KEY, False):
         return
@@ -232,7 +228,7 @@ def seed_sample_data():
 
     for u in sample_users:
         for offset in range(3):
-            # Just a simple step back in weeks
+            # step back in weeks for a mini time series
             d = base_date.replace(day=max(1, base_date.day - (7 * offset)))
             dating_feel = choice([3, 4, 5, 6])
             burnout_index = 8 - dating_feel
@@ -305,7 +301,10 @@ def seed_sample_data():
 def generate_persona_label(
     dating_feel: int, goal: str, friction: str, neurotype: str
 ) -> str:
-    """Return a short persona-ish label."""
+    """
+    Simple derived persona label to help reason about
+    segments and patterns. Not meant as a production taxonomy.
+    """
     neuro_tag = ""
     if neurotype in ["ADHD / attention challenges", "Autistic / on the spectrum"]:
         neuro_tag = "Neurodivergent "
@@ -342,6 +341,10 @@ def generate_persona_label(
 # Tagging qualitative notes
 # ---------------------------------------------------
 def tag_burnout_note(note: str) -> str:
+    """
+    Extremely lightweight auto-tagging to show how
+    qualitative notes could be structured for analysis.
+    """
     note_lower = note.lower()
 
     tags = []
@@ -386,8 +389,7 @@ PLANNING_TEMPLATES = [
 
 def assign_experiment_arm() -> str:
     """Randomly assign an experiment arm (A/B/C) for nudges."""
-    arm = choice(["A", "B", "C"])
-    return arm
+    return choice(["A", "B", "C"])
 
 
 def generate_nudge(
@@ -395,6 +397,7 @@ def generate_nudge(
 ) -> Tuple[str, str]:
     """
     Returns (nudge_type, nudge_text)
+
     experiment_arm:
         A -> scripted focus
         B -> reflective focus
@@ -438,61 +441,60 @@ def generate_nudge(
 
 
 # ---------------------------------------------------
-# Sidebar navigation & profile
+# Sidebar navigation & header
 # ---------------------------------------------------
 with st.sidebar:
-    # Logo
     st.image(
         "https://logowik.com/content/uploads/images/hinge-app1178.jpg",
         width=120,
     )
 
-    st.markdown("### Check-In Coach")
+    st.markdown("### Hinge Labs Concept")
 
     user_id = st.text_input(
-        "Your initials or nickname",
-        placeholder="e.g., AB, J.S., etc.",
+        "Simulated participant ID",
+        placeholder="e.g., P01, AB, etc.",
     )
 
     page = st.radio(
-        "Navigation",
+        "Views",
         [
-            "Participant Profile",
-            "New Check-In",
-            "Insights (Your Patterns)",
-            "Research Dashboard",
-            "Research Design",
-            "About",
+            "Participant Profile (simulated)",
+            "Check-In Flow (participant view)",
+            "Participant Insights (participant view)",
+            "Research Dashboard (Hinge Labs view)",
+            "Study Design Notes",
+            "About This Prototype",
         ],
         index=1,
     )
 
     st.markdown("---")
     st.caption(
-        "Prototype for exploring dating burnout, habits, and follow-through.\n"
-        "Designed as a UX research + product exploration."
+        "Independent concept prototype inspired by Hinge Labs’ research themes.\n"
+        "Not an official Hinge product."
     )
 
 if not user_id:
-    st.warning("Please enter your initials or nickname in the sidebar to continue.")
+    st.warning("Enter a simulated participant ID to walk through the flows.")
     st.stop()
 
 init_data()
 seed_sample_data()
 
-# Wrap all main pages in a "card" container for nicer layout
+# Wrap all main pages in a "card" container for a focused layout
 st.markdown('<div class="page-card">', unsafe_allow_html=True)
 
 
 # ---------------------------------------------------
-# Page: Participant Profile
+# Page: Participant Profile (simulated)
 # ---------------------------------------------------
-if page == "Participant Profile":
-    st.header("👤 Participant Profile (Research View)")
+if page == "Participant Profile (simulated)":
+    st.header("👤 Participant Profile (Simulated Research Fields)")
 
     st.markdown(
-        "Lightweight participant profile used for segmentation. "
-        "These fields attach to each of your check-ins."
+        "These fields represent the type of **explicit segmentation metadata** "
+        "that could be collected (with consent) and attached to check-ins for analysis."
     )
 
     # Load existing profile if present
@@ -571,7 +573,7 @@ if page == "Participant Profile":
                 ),
             )
             neurotype = st.selectbox(
-                "Neurotype (self-identified)",
+                "Neurotype (self-identified, optional)",
                 [
                     "Prefer not to say",
                     "ADHD / attention challenges",
@@ -625,12 +627,12 @@ if page == "Participant Profile":
             )
 
         additional_notes = st.text_area(
-            "Anything else you'd want a researcher to know about how you date?",
+            "Optional context the participant might share with researchers",
             value=existing_profile.get("additional_notes", ""),
-            placeholder="Optional context (e.g., work schedule, mental health, family, culture...).",
+            placeholder="E.g., work schedule, mental health context, cultural background, etc.",
         )
 
-        submitted_profile = st.form_submit_button("Save profile notes")
+        submitted_profile = st.form_submit_button("Save simulated profile")
 
     if submitted_profile:
         profile_store = st.session_state.get(PROFILE_KEY, {})
@@ -645,30 +647,31 @@ if page == "Participant Profile":
         }
         st.session_state[PROFILE_KEY] = profile_store
 
-        st.success("Profile preferences saved. These values will be attached to your future check-ins.")
+        st.success("Profile stored. New check-ins will reference these fields.")
 
-    st.markdown("### How these fields are used (for the Director)")
+    st.markdown("### Notes for Hinge Labs")
     st.markdown(
         """
-- **Segmentation**: Compare patterns across groups (e.g., ADHD vs. non-ADHD, different intentions).  
-- **Context**: Add qualitative nuance to what you see on the dashboard.  
-- **Filterability**: In a real implementation, charts can be filtered by these fields.
+- Intention is to show **explicit, consentful segmentation**, not inference.  
+- Fields are deliberately lightweight and editable to support iterative research.  
+- In a production context these would sit behind consent flows and privacy controls.
 """
     )
 
 
 # ---------------------------------------------------
-# Page: New Check-In
+# Page: Check-In Flow (participant view)
 # ---------------------------------------------------
-elif page == "New Check-In":
-    st.header("🧭 Weekly Dating Check-In")
+elif page == "Check-In Flow (participant view)":
+    st.header("🧭 Weekly Check-In (Participant Flow)")
 
     st.markdown(
-        "Capture how dating feels, your behaviors this week, and get a tailored follow-through nudge."
+        "This screen models a **lightweight diary-style interaction** a Hinge user could complete "
+        "on a weekly basis, either in-app or via a companion surface."
     )
 
     with st.form("checkin_form"):
-        st.subheader("1. How is dating feeling right now?")
+        st.subheader("1. Current dating climate")
 
         col1, col2 = st.columns(2)
 
@@ -688,7 +691,7 @@ elif page == "New Check-In":
 
         with col2:
             goal = st.selectbox(
-                "What’s your main focus this month?",
+                "Short-term focus for the next few weeks",
                 [
                     "Go on at least one date",
                     "Be more intentional about who I match with",
@@ -710,7 +713,7 @@ elif page == "New Check-In":
             )
 
         st.markdown("---")
-        st.subheader("2. This week in your dating life")
+        st.subheader("2. This week’s activity snapshot")
 
         c1, c2, c3 = st.columns(3)
         with c1:
@@ -722,7 +725,7 @@ elif page == "New Check-In":
             )
         with c2:
             conversations = st.number_input(
-                "Conversations started",
+                "New conversations started",
                 min_value=0,
                 step=1,
                 value=0,
@@ -736,15 +739,15 @@ elif page == "New Check-In":
             )
 
         burnout_note = st.text_area(
-            "Anything that felt especially good or draining this week?",
-            placeholder="Optional but powerful for patterns over time.",
+            "Anything that felt especially energising or draining?",
+            placeholder="Short, natural-language reflection. This is used qualitatively, not for UX copy.",
         )
 
         st.markdown("---")
-        st.subheader("3. Follow-through after a date")
+        st.subheader("3. Follow-through after dates")
 
         went_on_date = st.radio(
-            "Did you go on a date this week?",
+            "Did you go on at least one date this week?",
             ["No", "Yes"],
             horizontal=True,
         )
@@ -754,42 +757,42 @@ elif page == "New Check-In":
 
         if went_on_date == "Yes":
             want_see_again = st.radio(
-                "Do you think you’d like to see them again?",
+                "For your most recent date, do you think you’d like to see them again?",
                 ["Yes", "Not sure", "No"],
                 horizontal=True,
             )
 
             standout_moment = st.text_area(
-                "What’s one moment or topic that stood out from the date?",
+                "One moment or topic that stood out (for you)",
                 placeholder="E.g., ‘We laughed about our favorite bad movies’",
             )
 
         st.markdown("---")
-        st.subheader("4. Experiment setup (for research)")
+        st.subheader("4. Nudge assignment (experiment control)")
 
         col_exp1, col_exp2 = st.columns(2)
 
         with col_exp1:
             experiment_mode = st.radio(
-                "Nudge assignment mode",
+                "Nudge assignment mode (for research)",
                 [
                     "Random arm (A/B/C)",
-                    "Force Scripted",
-                    "Force Reflective",
-                    "Force Planning",
+                    "Force Scripted (Arm A)",
+                    "Force Reflective (Arm B)",
+                    "Force Planning (Arm C)",
                 ],
             )
 
         with col_exp2:
             st.caption(
                 """
-- Arm **A** → Scripted nudges  
-- Arm **B** → Reflective nudges  
-- Arm **C** → Planning nudges  
+- Arm **A** → Scripted message suggestions  
+- Arm **B** → Reflective prompts  
+- Arm **C** → Planning / time-boxing nudges  
 """
             )
 
-        submitted = st.form_submit_button("Generate support nudge & save check-in")
+        submitted = st.form_submit_button("Save check-in & generate nudge")
 
     if submitted:
         # Pull profile values if stored
@@ -808,15 +811,15 @@ elif page == "New Check-In":
         # Determine experiment arm
         if experiment_mode == "Random arm (A/B/C)":
             experiment_arm = assign_experiment_arm()
-        elif experiment_mode == "Force Scripted":
+        elif experiment_mode == "Force Scripted (Arm A)":
             experiment_arm = "A"
-        elif experiment_mode == "Force Reflective":
+        elif experiment_mode == "Force Reflective (Arm B)":
             experiment_arm = "B"
         else:
             experiment_arm = "C"
 
-        # Compute derived metrics
-        burnout_index = 8 - dating_feel  # inverse of mood
+        # Derived metrics
+        burnout_index = 8 - dating_feel  # simple inverse of mood
         conversation_rate = (
             (conversations / matches) if matches > 0 else 0.0
         )
@@ -842,8 +845,8 @@ elif page == "New Check-In":
         else:
             nudge_type = "None (no date this week)"
             nudge_text = (
-                "No date this week — that’s totally okay. "
-                "You might set a tiny goal for next week, like sending one message you feel good about."
+                "No date this week — that’s totally fine. "
+                "A very small commitment, like sending one message you feel good about next week, can still count as progress."
             )
 
         row = {
@@ -884,52 +887,57 @@ elif page == "New Check-In":
 
         save_checkin(row)
 
-        st.success("Your check-in has been saved.")
+        st.success("Check-in captured. Below is the assigned nudge for this participant state.")
 
-        st.markdown("### Your support nudge for this week")
+        st.markdown("### Generated nudge (example of experiment arm logic)")
         st.markdown(f"**Experiment arm:** {experiment_arm}")
-        st.markdown(f"**Persona:** `{persona_label}`")
-        st.markdown(f"**Nudge type:** {nudge_type}")
+        st.markdown(f"**Derived persona (for analysis, not UX copy):** `{persona_label}`")
+        st.markdown(f"**Nudge style:** {nudge_type}")
         st.info(nudge_text)
 
         if research_tags:
-            st.caption(f"Auto-tagged research themes: {research_tags}")
+            st.caption(f"Auto-tagged qualitative themes (toy demo): {research_tags}")
 
         st.markdown("---")
-        st.caption("Review patterns and experiment data on *Insights* and *Research Dashboard*.")
+        st.caption("You can now switch to **Participant Insights** or **Research Dashboard** to see how this surfaces for researchers.")
 
 
 # ---------------------------------------------------
-# Page: Insights (Your Patterns)
+# Page: Participant Insights (participant view)
 # ---------------------------------------------------
-elif page == "Insights (Your Patterns)":
-    st.header("🔍 Your Patterns Over Time")
+elif page == "Participant Insights (participant view)":
+    st.header("🔍 Participant Insights (Simulated)")
 
     df = get_data()
     if df.empty or user_id not in df["user_id"].unique():
-        st.info("You don’t have any saved check-ins yet. Submit at least one to see insights.")
+        st.info("This simulated participant has no check-ins yet. Add at least one via the Check-In Flow.")
     else:
         user_df = df[df["user_id"] == user_id].copy()
         user_df["checkin_date_dt"] = pd.to_datetime(user_df["checkin_date"])
 
+        st.markdown(
+            "This view illustrates what a **lightweight reflective surface** for the participant could look like, "
+            "on top of the underlying data used for research."
+        )
+
         # Overall vs global summary
-        st.subheader("At a glance")
+        st.subheader("High-level snapshot")
 
         col1, col2, col3 = st.columns(3)
         with col1:
             st.metric(
-                "Average dating feel (you)",
+                "Avg. dating feel (this participant)",
                 f"{user_df['dating_feel'].mean():.1f} / 7",
             )
         with col2:
             global_df = df.copy()
             st.metric(
-                "Average dating feel (all participants)",
+                "Avg. dating feel (all simulated participants)",
                 f"{global_df['dating_feel'].mean():.1f} / 7",
             )
         with col3:
             st.metric(
-                "Total check-ins recorded (you)",
+                "Total check-ins",
                 f"{len(user_df)}",
             )
 
@@ -938,7 +946,7 @@ elif page == "Insights (Your Patterns)":
 
         col4, col5 = st.columns(2)
         with col4:
-            st.markdown("**Dating feel (1–7) over time**")
+            st.markdown("**Dating feel by check-in date**")
             mood_series = (
                 user_df.sort_values("checkin_date_dt")[["checkin_date_dt", "dating_feel"]]
                 .set_index("checkin_date_dt")
@@ -946,14 +954,14 @@ elif page == "Insights (Your Patterns)":
             st.line_chart(mood_series)
 
         with col5:
-            st.markdown("**Burnout index vs. dates**")
+            st.markdown("**Burnout index vs. number of dates**")
             small = user_df.sort_values("checkin_date_dt")[
                 ["checkin_date_dt", "burnout_index", "dates"]
             ].set_index("checkin_date_dt")
             st.line_chart(small)
 
         st.markdown("---")
-        st.subheader("Your personas & frictions")
+        st.subheader("Personas & recurring frictions")
 
         persona_counts = (
             user_df["persona_label"]
@@ -964,26 +972,25 @@ elif page == "Insights (Your Patterns)":
 
         col6, col7 = st.columns(2)
         with col6:
-            st.markdown("**Persona labels (how often they show up)**")
+            st.markdown("**Derived persona labels (frequency)**")
             st.dataframe(persona_counts, use_container_width=True)
 
         with col7:
-            st.markdown("**Top friction statements for you**")
+            st.markdown("**Top friction statements**")
             st.dataframe(
                 user_df["friction"].value_counts().rename("count").to_frame(),
                 use_container_width=True,
             )
 
         st.markdown("---")
-        st.subheader("Auto-generated insight cards")
+        st.subheader("Heuristic insight cards (illustrative)")
 
-        # Heuristic “insights”
         insight_cards = []
 
         if user_df["burnout_index"].mean() >= 4:
             insight_cards.append(
-                "Your average burnout index is on the higher side. "
-                "Weeks with more conversations might be draining you—consider narrowing your focus."
+                "Average burnout index is relatively high. Weeks with more conversations may be depleting; "
+                "narrowing focus or introducing guardrails could be helpful."
             )
 
         if (
@@ -991,14 +998,14 @@ elif page == "Insights (Your Patterns)":
             and user_df["matches"].mean() > 0
         ):
             insight_cards.append(
-                "You tend to start conversations with less than half of your matches. "
-                "One micro-goal could be starting just one extra conversation per week."
+                "This participant starts conversations with fewer than half of their matches. "
+                "Scripted initiator nudges might meaningfully change behavior here."
             )
 
         if user_df["date_rate"].mean() < 0.4 and user_df["conversations"].mean() > 0:
             insight_cards.append(
-                "A relatively small share of your conversations turn into dates. "
-                "Experimenting with more direct, scripted messages might help reduce decision fatigue."
+                "A small portion of conversations convert into dates. "
+                "Nudges that support decision-making around who to progress with could be impactful."
             )
 
         if (
@@ -1006,21 +1013,22 @@ elif page == "Insights (Your Patterns)":
             in user_df["neurotype"].unique()
         ):
             insight_cards.append(
-                "You’ve identified attention challenges. Structuring your nudges to be time-bound "
-                "(e.g., ‘tonight’ or ‘this weekend’) may support follow-through."
+                "Participant self-identifies with attention challenges. Time-bound, concrete nudges are likely "
+                "a better fit than generic encouragement or open-ended advice."
             )
 
         if not insight_cards:
             insight_cards.append(
-                "So far, your data doesn’t show a clear pattern yet — more check-ins will help this view become more meaningful."
+                "With the current number of check-ins, patterns are still emerging. "
+                "More longitudinal data would make these insights more robust."
             )
 
         for idx, text in enumerate(insight_cards, start=1):
-            st.markdown(f"**Insight {idx}**")
+            st.markdown(f"**Insight {idx} (example)**")
             st.info(text)
 
         st.markdown("---")
-        st.subheader("Mood distribution")
+        st.subheader("Mood distribution (for this participant)")
 
         mood_hist = (
             user_df["dating_feel"]
@@ -1033,7 +1041,7 @@ elif page == "Insights (Your Patterns)":
             st.bar_chart(mood_hist.set_index("dating_feel"))
 
         st.markdown("---")
-        st.subheader("Your raw check-in entries")
+        st.subheader("Underlying check-in data for this participant")
 
         st.dataframe(
             user_df[
@@ -1057,18 +1065,23 @@ elif page == "Insights (Your Patterns)":
 
 
 # ---------------------------------------------------
-# Page: Research Dashboard (aggregate view)
+# Page: Research Dashboard (Hinge Labs view)
 # ---------------------------------------------------
-elif page == "Research Dashboard":
-    st.header("📊 Research Dashboard (All Participants)")
+elif page == "Research Dashboard (Hinge Labs view)":
+    st.header("📊 Research Dashboard (Concept View for Hinge Labs)")
 
     df = get_data()
 
     if df.empty:
-        st.info("No check-ins recorded yet. Submit a check-in to see data here.")
+        st.info("No check-ins recorded in this session. The seeding function can be extended for richer demo data.")
     else:
+        st.markdown(
+            "This view is meant to illustrate how **aggregated patterns** might look for a Hinge Labs-style study "
+            "using this flow."
+        )
+
         # Filters
-        st.subheader("Filters")
+        st.subheader("Filters (by simulated segmentation)")
 
         colf1, colf2, colf3 = st.columns(3)
         with colf1:
@@ -1102,12 +1115,12 @@ elif page == "Research Dashboard":
             filtered["checkin_date_dt"] = pd.to_datetime(filtered["checkin_date"])
 
             st.markdown("---")
-            st.subheader("Study-level metrics")
+            st.subheader("Study-level metrics (for current filters)")
 
             c1, c2, c3, c4 = st.columns(4)
             with c1:
                 st.metric(
-                    "Participants",
+                    "Unique participants",
                     f"{filtered['user_id'].nunique()}",
                 )
             with c2:
@@ -1117,12 +1130,12 @@ elif page == "Research Dashboard":
                 )
             with c3:
                 st.metric(
-                    "Avg dating feel",
+                    "Avg. dating feel",
                     f"{filtered['dating_feel'].mean():.1f} / 7",
                 )
             with c4:
                 st.metric(
-                    "Avg burnout index",
+                    "Avg. burnout index",
                     f"{filtered['burnout_index'].mean():.1f}",
                 )
 
@@ -1140,7 +1153,7 @@ elif page == "Research Dashboard":
                 st.line_chart(mood_series)
 
             with colg2:
-                st.markdown("**Nudge types used**")
+                st.markdown("**Nudge styles delivered (for this slice)**")
                 nudge_counts = (
                     filtered["nudge_type"]
                     .value_counts()
@@ -1155,14 +1168,14 @@ elif page == "Research Dashboard":
                     st.caption("No nudges recorded yet for the current filters.")
 
             st.markdown("---")
-            st.subheader("Behavior vs. burnout")
+            st.subheader("Behavior vs. burnout (toy scatter)")
 
             if not filtered.empty:
                 scatter_df = filtered[["conversations", "burnout_index"]]
                 st.scatter_chart(scatter_df)
 
             st.markdown("---")
-            st.subheader("Goals, frictions & personas")
+            st.subheader("Goals, frictions & derived personas")
 
             colg3, colg4, colg5 = st.columns(3)
             with colg3:
@@ -1178,7 +1191,7 @@ elif page == "Research Dashboard":
                     use_container_width=True,
                 )
             with colg5:
-                st.markdown("**Top personas**")
+                st.markdown("**Top derived persona labels**")
                 st.dataframe(
                     filtered["persona_label"]
                     .value_counts()
@@ -1188,7 +1201,7 @@ elif page == "Research Dashboard":
                 )
 
             st.markdown("---")
-            st.subheader("Qualitative themes (auto-tagged)")
+            st.subheader("Qualitative themes (auto-tagged, illustrative only)")
 
             tag_counts = (
                 filtered["research_tags"]
@@ -1203,10 +1216,10 @@ elif page == "Research Dashboard":
                 tag_counts = tag_counts.value_counts().rename("count").to_frame()
                 st.dataframe(tag_counts, use_container_width=True)
             else:
-                st.caption("No auto-tagged qualitative themes yet.")
+                st.caption("No auto-tagged qualitative themes in this slice yet.")
 
             st.markdown("---")
-            st.subheader("Raw check-in data (filtered)")
+            st.subheader("Underlying check-in rows (exportable)")
 
             st.dataframe(
                 filtered[
@@ -1235,112 +1248,120 @@ elif page == "Research Dashboard":
 
             csv = filtered.to_csv(index=False).encode("utf-8")
             st.download_button(
-                "Download filtered data as CSV",
+                "Download current slice as CSV (concept)",
                 data=csv,
-                file_name="dating_checkin_data.csv",
+                file_name="hinge_labs_concept_checkins.csv",
                 mime="text/csv",
             )
 
 
 # ---------------------------------------------------
-# Page: Research Design
+# Page: Study Design Notes
 # ---------------------------------------------------
-elif page == "Research Design":
-    st.header("🧪 Embedded Research Design")
+elif page == "Study Design Notes":
+    st.header("🧪 Study Design Notes (for Hinge Labs)")
 
     st.markdown(
         """
-Use this page to walk through your research thinking live with the Director of Research.
+This page is meant purely as **scaffolding for a research conversation** – it’s not user-facing.
 """
     )
 
-    st.markdown("### 1. Research questions")
+    st.markdown("### Framing")
+
+    st.markdown(
+        """
+**Concept:** A lightweight “Dating Check-In & Follow-Through Coach” that:
+
+- Captures **weekly state + behavior** (burnout, mindset, matches / convos / dates)  
+- Randomizes participants into different **follow-through nudge styles** after dates  
+- Surfaces data back to both **participants** (reflection) and **researchers** (experiments)  
+"""
+    )
+
+    st.markdown("### Example research questions")
+
     st.markdown(
         """
 1. How do weekly reflections and check-ins relate to dating burnout over time?  
 2. Which nudge style (scripted, reflective, planning) best supports follow-through after dates?  
-3. Do different segments (e.g., ADHD vs. non-ADHD, different dating intentions) respond differently to these nudges?  
+3. How do responses vary across segments (e.g., ADHD vs. non-ADHD, different intentions, regions)?  
 """
     )
 
-    st.markdown("### 2. Hypotheses")
+    st.markdown("### Illustrative hypotheses")
+
     st.markdown(
         """
-- **H1**: Participants who complete weekly check-ins will show a **decrease in burnout index** over 3–4 weeks.  
-- **H2**: **Scripted nudges (Arm A)** will increase the self-reported rate of follow-up messages after a date.  
-- **H3**: **Planning nudges (Arm C)** will increase the likelihood of a second date being scheduled.  
-- **H4**: For participants with **ADHD / attention challenges**, time-bound scripted nudges will feel more helpful than generic advice.  
+- **H1**: Participants completing weekly check-ins show a **decrease in burnout index** over 3–4 weeks.  
+- **H2**: **Scripted nudges (Arm A)** increase the self-reported rate of follow-up outreach after a date.  
+- **H3**: **Planning nudges (Arm C)** increase the likelihood of a second date being scheduled.  
+- **H4**: For participants with **attention challenges**, time-bound scripted nudges feel more usable than generic advice.  
 """
     )
 
-    st.markdown("### 3. Study design (MVP version)")
+    st.markdown("### MVP study design (diary + in-product instrumentation)")
+
     st.markdown(
         """
-- **Method**: Mixed-methods diary study  
-    - Participants complete weekly check-ins for 3–4 weeks  
-    - The app randomizes them into nudge arms (A/B/C) when they go on a date  
-- **Quantitative data** (captured in this prototype):  
-    - `dating_feel` (1–7) and derived `burnout_index`  
-    - `matches`, `conversations`, `dates`, conversion rates  
-    - Experiment arm (`nudge_arm`) and nudge type (`nudge_type`)  
-- **Qualitative data**:  
-    - Weekly burnout notes (`burnout_note`)  
-    - Auto-tagged themes (`research_tags`)  
-    - Standout moments from dates  
+- **Method:** Mixed-methods diary-style study  
+    - Participants complete weekly check-ins for ~4 weeks  
+    - Nudge arm assignment is either fixed or rotated when they have a date  
+- **Quantitative signals:**  
+    - `dating_feel` (1–7) → `burnout_index`  
+    - `matches`, `conversations`, `dates` and conversion rates  
+    - Nudge arm (`nudge_arm`) and style (`nudge_type`)  
+- **Qualitative signals:**  
+    - Weekly reflections (`burnout_note`)  
+    - Standout date moments (`standout_moment`)  
+    - Light auto-tagging demo (`research_tags`) – would be replaced with proper coding work in practice  
 """
     )
 
-    st.markdown("### 4. Metrics & analyses")
+    st.markdown("### How this could map into production")
+
     st.markdown(
         """
-- Change in average **burnout index** over time per participant and segment  
-- **Conversion metrics**:  
-    - conversations / matches (interest engagement)  
-    - dates / conversations (follow-through to IRL)  
-- Nudge effectiveness:  
-    - Self-reported follow-up behavior (future enhancement)  
-    - Rate of “want to see again = Yes” that lead to a planned second date  
+In a live Hinge context, this concept could:
+
+- Sit adjacent to, or be integrated with, the existing **Hinge Labs** content and experiments  
+- Replace the self-reported behavioral metrics with **instrumented events** (e.g., message send, date confirmation surfaces)  
+- Use existing experimentation frameworks for **A/B/C testing** nudge content, timing, and audience segmentation  
+- Provide a structured path for **longitudinal, wellbeing-oriented research** around burnout and follow-through  
 """
     )
 
-    st.markdown("### 5. How this could scale inside a real dating app")
     st.markdown(
         """
-If this were integrated into a production environment, it could:
+A natural next step would be to discuss:
 
-- Use **real behavioral signals** instead of self-report (e.g., messaging events, date confirmations).  
-- Run as a **within-app experiment** where the team tweaks nudge content & timing.  
-- Support **segment-level analysis** for Gen Z, LGBTQ+ users, neurodivergent users, etc., with proper consent & privacy.  
-
-You can end your demo with something like:  
-> “If you were to run this inside Hinge Labs, what would you want to add, remove, or change?”  
+> “If this were running inside Hinge for 6–8 weeks, what would you want to observe or test that isn’t currently covered here?”
 """
     )
 
 
 # ---------------------------------------------------
-# Page: About
+# Page: About This Prototype
 # ---------------------------------------------------
-elif page == "About":
-    st.header("ℹ️ About this prototype")
+elif page == "About This Prototype":
+    st.header("ℹ️ About This Prototype")
 
     st.markdown(
         """
-This is a **Dating Check-In & Follow-Through Coach** built as a
-**UX Research + Product prototype**.
+This is an **independent concept prototype** created specifically for a conversation with the
+**Hinge Research / Hinge Labs** team.
 
-It shows that you can:
+It aims to demonstrate:
 
-- Translate **research themes** (burnout, mindset, follow-through) into flows  
-- Design with **experimentability** in mind (nudge arms, segmentation, metrics)  
-- Support both **participant views** and **researcher views**  
+- The ability to translate **Hinge Labs-style themes** (burnout, mindset, follow-through, neurodivergence) into product flows  
+- Designing surfaces that are **experiment-ready** (arms, segmentation, metrics) from day one  
+- Combining **participant-facing reflection** with **researcher-facing dashboards** in a single, coherent artifact  
 
-Data is stored in-memory for demo purposes. In a real environment, this could
-connect to:
+Implementation details:
 
-- A secure backend with consent & privacy  
-- An experimentation / feature-flag framework  
-- A richer qualitative analysis workflow (tagging, clustering, export)  
+- Built in Streamlit for speed of iteration and ease of sharing  
+- All data in this demo is **ephemeral in-memory** and/or **synthetic**, purely for illustration  
+- Nothing here is connected to real Hinge data or real users  
 """
     )
 
